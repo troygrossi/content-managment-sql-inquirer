@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const mysql = require('mysql2');
-const cTable = require("console.table");
+require("console.table");
 const inquirer = require("inquirer");
 
   const db = mysql.createConnection(
@@ -13,57 +13,66 @@ const inquirer = require("inquirer");
       password: process.env.PASSWORD,
       database: 'managment'
     },
-    console.log('Connected to the election database.')
+    console.log('Connected to the managment database.')
   );
 
 
 
- async function newEmployee(){
-    await db.query("SELECT role_title FROM roles;",(err, result) => {
+ const setEmployee = () => {
+     db.query("SELECT role_title FROM roles;",(err, result) => {
         if (err) throw err;
-        let roles = [];
+        let roleArray = [];
          inquirer.prompt([
               {
-                  name: "role",
-                  type: "list",
-                  message: "Select employee role",
-                  choices: function() {
-                      result.forEach((res, index)=>{
-                        roles.push(res[index].role_title);
-                      });
-                      return roles;
-                  },
-              },
-              {
-                  name: "fname",
+                  name: "employee_fname",
                   type: "input",
-                  message: "Enter employee's first name",
+                  message: "Enter employee's first name:",
               },
               {
-                  name: "lname",
+                  name: "employee_lname",
                   type: "input",
-                  message: "Enter employee's last name"
+                  message: "Enter employee's last name:"
               },
               {
-                  name: "manager",
+                name: "employee_role",
+                type: "list",
+                message: "Select employee role:",
+                choices: function() {
+                    result.forEach((res)=>{
+                      roleArray.push(res.role_title);
+                    });
+                    return roleArray;
+                },
+            },
+              {
+                  name: "employee_manager",
                   type: "number",
-                  message: "Enter ID for employee manager?"
+                  message: "Enter ID for employee manager:"
               }
-          ]);
-          // .then((response) {
-          //     db.query("INSERT INTO employees (employee_fname, employee_lname, employee_role, first_name, last_name, industry_connected)",
-          //     {
-          //         first_name: response.firstname,
-          //         last_name: response.lastname,
-          //         role_id: roleArr.indexOf(response.role)+1,
-          //         manager_id: response.manager
-          //     });
-          //     promptQuestions();
-          // });
+          ])
+          .then((response) => {
+              db.query("INSERT INTO employees SET ?",
+              {
+                employee_fname: response.employee_fname,
+                employee_lname: response.employee_lname,
+                employee_role: roleArray.indexOf(response.employee_role)+1,
+                employee_manager: response.employee_manager
+              });
+              promptQuestions();
+          });
     });
 };
 
-const newDepartment = () => {
+const getEmployees = () => {
+  
+  db.query("SELECT * FROM employees;", (err, result) => {
+      if (err) throw err;
+      console.table(result);
+      promptQuestions();
+  });
+}
+
+const setDepartment = () => {
   inquirer
       .prompt(
           {
@@ -79,7 +88,15 @@ const newDepartment = () => {
       });
   };
 
-  const newRole =() => {
+  const getDepartments = () => {
+    db.query("SELECT * FROM departments;", (err, result) => {
+        if (err) throw err;
+        console.table(result);
+        promptQuestions();
+    });
+}
+
+  const setRole =() => {
     let query = "SELECT name FROM employee_managerDB.department";
 
     db.query("SELECT department_name FROM departments", (err, result) => {
@@ -122,6 +139,15 @@ const newDepartment = () => {
     });
   };
 
+  const getRoles = () => {
+    db.query("SELECT roles.*, departments.department_name FROM roles LEFT JOIN departments ON roles.role_department = departments.department_id;", (err, result) => {
+        if (err) throw err;
+        console.table(result);
+        promptQuestions();
+    });
+};
+
+
 
   function promptQuestions(){
     inquirer.prompt(
@@ -130,9 +156,9 @@ const newDepartment = () => {
         name: "menu",
         message: "Choose an option from the menu",
         choices: [
-          "View all employees",
-          "View all departments",
-          "View all roles",
+          "View employees",
+          "View departments",
+          "View roles",
           "Add employee",
           "Add department",
           "Add role",
@@ -142,28 +168,32 @@ const newDepartment = () => {
       }
     ).then((response) => {
       switch (response.menu) {
-          case "Add employee":
-              newEmployee();
+          case "View employees":
+            getEmployees();
               break;
 
-          // case "View departments":
-          //     viewDepartments();
-          //     break;
+          case "Add employee":
+              setEmployee();
+              break;
 
-          // case "View roles":
-          //     viewRoles();
-          //     break;
+          case "View departments":
+              getDepartments();
+              break;
 
-          // case "Add employee":
-          //     newEmployee();
-          //     break;
+          case "View roles":
+              getRoles();
+              break;
+
+          case "Add employee":
+              setEmployee();
+              break;
 
           case "Add department":
-              newDepartment();
+              setDepartment();
               break;
 
           case "Add role":
-              newRole();
+              setRole();
               break;
 
           // case "Update employee role":
