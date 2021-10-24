@@ -65,7 +65,8 @@ const inquirer = require("inquirer");
 
 const getEmployees = () => {
   
-  db.query("SELECT employees.*, roles.role_title, roles.role_salary, CONCAT(manager.employee_fname, ' ', manager.employee_lname) AS manager FROM employees LEFT JOIN roles ON employees.employee_role = roles.role_id LEFT JOIN employees manager ON manager.employee_manager = employees.employee_id;", (err, result) => {
+
+      db.query("SELECT employees.*, roles.role_title, roles.role_salary, CONCAT(manager.employee_fname, ' ', manager.employee_lname) AS manager FROM employees LEFT JOIN roles ON employees.employee_role = roles.role_id INNER JOIN employees manager ON manager.employee_id = employees.employee_manager ORDER BY employee_id;", (err, result) => {
       if (err) throw err;
       console.table(result);
       promptQuestions();
@@ -239,7 +240,5 @@ const setDepartment = () => {
       }
   });
 }
-
-  
 
   promptQuestions();
