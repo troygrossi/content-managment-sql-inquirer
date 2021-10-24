@@ -65,11 +65,47 @@ const inquirer = require("inquirer");
 
 const getEmployees = () => {
   
-  db.query("SELECT * FROM employees;", (err, result) => {
+  db.query("SELECT employees.*, roles.role_title, roles.role_salary, CONCAT(manager.employee_fname, ' ', manager.employee_lname) AS manager FROM employees LEFT JOIN roles ON employees.employee_role = roles.role_id LEFT JOIN employees manager ON manager.employee_manager = employees.employee_id;", (err, result) => {
       if (err) throw err;
       console.table(result);
       promptQuestions();
   });
+}
+
+const changeRole = () => {
+  db.query("SELECT employee_fname, employee_id FROM employees", (err, result) => {
+    console.log(result);
+      if (err) throw err;
+      let employeeArray = [];
+      let employee_role = "";
+      let employee_id = "";
+      inquirer
+          .prompt([
+              {
+                  name: "employee_id",
+                  type: "list",
+                  message: "Choose an employee to update role:",
+                  choices: () => {
+                    result.forEach((res)=>{
+                      employeeArray.push(`ID: ${res.employee_id} First Name: ${res.employee_fname} `);
+                    });
+                      return employeeArray;
+                  },
+              },
+              {
+                  name: "employee_role",
+                  type: "input",
+                  message: "Input new role ID:"
+              }
+          ])
+          .then((result) => {
+            employee_id = result.employee_id.split(' ')[1];
+            employee_role = result.employee_role;
+              db.query("UPDATE employees SET employee_role = ? WHERE employee_id = ?", [employee_role, employee_id]);
+              promptQuestions();
+          })
+  })
+
 }
 
 const setDepartment = () => {
@@ -156,49 +192,45 @@ const setDepartment = () => {
         name: "menu",
         message: "Choose an option from the menu",
         choices: [
-          "View employees",
-          "View departments",
-          "View roles",
-          "Add employee",
-          "Add department",
-          "Add role",
-          "Change employee role",
+          "View all employees",
+          "View all departments",
+          "View all roles",
+          "Add an employee",
+          "Add a department",
+          "Add a role",
+          "Update employee role",
           "Exit"
         ]
       }
     ).then((response) => {
       switch (response.menu) {
-          case "View employees":
+          case "View all employees":
             getEmployees();
               break;
 
-          case "Add employee":
+          case "Add an employee":
               setEmployee();
               break;
 
-          case "View departments":
+          case "View all departments":
               getDepartments();
               break;
 
-          case "View roles":
+          case "View all roles":
               getRoles();
               break;
 
-          case "Add employee":
-              setEmployee();
-              break;
-
-          case "Add department":
+          case "Add a department":
               setDepartment();
               break;
 
-          case "Add role":
+          case "Add a role":
               setRole();
               break;
 
-          // case "Update employee role":
-          //     changeRole();
-          //     break;
+          case "Update employee role":
+              changeRole();
+              break;
 
           case "Exit":
             console.log("Prompt End");

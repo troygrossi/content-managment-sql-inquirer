@@ -5,8 +5,8 @@ CREATE TABLE departments (
 CREATE TABLE roles (
   role_id INTEGER AUTO_INCREMENT PRIMARY KEY,
   role_title VARCHAR(30) NOT NULL,
-  role_department INTEGER NOT NULL,
   role_salary INTEGER NOT NULL,
+  role_department INTEGER NOT NULL,
   FOREIGN KEY (role_department) REFERENCES departments(department_id)
 );
 CREATE TABLE employees (
